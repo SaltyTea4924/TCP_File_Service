@@ -45,11 +45,36 @@ public class FileClient {
                     break;
 
                 case "R":
+                    System.out.println("PLease enter file name");
+                    String oldname = keyboard.nextLine();
+                    System.out.println("Please enter in new file name to replace old name");
+                    String newName = keyboard.nextLine();
+                    ByteBuffer rename = ByteBuffer.wrap((command+oldname+newName).getBytes());
+                    SocketChannel socket = SocketChannel.open();
+                    socket.connect(new InetSocketAddress(args[0], serverPort));
+                    socket.write(rename);
+                    socket.shutdownOutput();
 
+                    ByteBuffer c = ByteBuffer.allocate(1);
+                    socket.read(c);
+                    c.flip();
+                    byte[] b = new byte[STATUS_CODE_LENGTH];
+                    c.get(b);
+                    System.out.println(new String(b));
                     break;
 
                 case "L":
+                    ByteBuffer list = ByteBuffer.wrap(command.getBytes());
+                    SocketChannel chan = SocketChannel.open();
+                    chan.connect(new InetSocketAddress(args[0], serverPort));
+                    chan.write(list);
+                    chan.shutdownOutput();
 
+                    ByteBuffer bytes = ByteBuffer.allocate(2500);
+                    chan.read(bytes);
+                    bytes.flip();
+                    byte[] l = new byte[bytes.toString().length()];
+                    System.out.println(new String(l));
                     break;
 
                 default:
