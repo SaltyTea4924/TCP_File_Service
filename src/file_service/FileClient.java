@@ -48,10 +48,10 @@ public class FileClient {
 
                 case "R":
                     System.out.println("PLease enter file name");
-                    String oldname = keyboard.nextLine();
+                    String oldName = keyboard.nextLine();
                     System.out.println("Please enter in new file name to replace old name");
                     String newName = keyboard.nextLine();
-                    ByteBuffer rename = ByteBuffer.wrap((command+oldname+newName).getBytes(StandardCharsets.UTF_8));
+                    ByteBuffer rename = ByteBuffer.wrap((command + oldName + "*" + newName).getBytes(StandardCharsets.UTF_8));
                     SocketChannel socket = SocketChannel.open();
                     socket.connect(new InetSocketAddress(args[0], serverPort));
                     socket.write(rename);

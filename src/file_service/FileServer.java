@@ -21,16 +21,16 @@ public class FileServer {
             char command = (char)request.get();
             System.out.println("received command: " + command);
             switch (command){
-                case 'D':
+                case 'D': {
                     byte[] a = new byte[request.remaining()];
                     request.get(a);
                     String fileName = new String(a);
                     File file = new File(fileName);
                     boolean success = false;
-                    if(file.exists()){
+                    if (file.exists()) {
                         success = file.delete();
                     }
-                    if (success){
+                    if (success) {
                         ByteBuffer code = ByteBuffer.wrap("S".getBytes());
                         serverSocket.write(code);
                     } else {
@@ -39,8 +39,22 @@ public class FileServer {
                     }
                     serverSocket.close();
                     break;
-                case 'R':
+                }
+                case 'R':{
+                    byte[] a = new byte[request.remaining()];
+                    request.get(a);
+                    String oldName = "";
+                    String newName = "";
+                    String files = new String(a);
+                    for ( int i = 0; i <= files.length(); i++){
+                        while(files.charAt(i) != '*'){
+                            oldName = oldName + files.charAt(i);
+                        }
+
+                        newName = newName + files.charAt(i);
+                    }
                     break;
+                }
                 case 'L':
                     break;
                 case 'G':
