@@ -3,6 +3,7 @@ package file_service;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
 public class FileClient {
@@ -22,7 +23,7 @@ public class FileClient {
                 case "D":
                     System.out.println("PLease enter file name");
                     String filename = keyboard.nextLine();
-                    ByteBuffer request = ByteBuffer.wrap((command+filename).getBytes());
+                    ByteBuffer request = ByteBuffer.wrap((command+filename).getBytes(StandardCharsets.UTF_8));
                     SocketChannel channel = SocketChannel.open();
                     channel.connect(new InetSocketAddress(args[0], serverPort));
                     channel.write(request);
@@ -30,6 +31,7 @@ public class FileClient {
 
                     ByteBuffer code = ByteBuffer.allocate(1);
                     channel.read(code);
+                    channel.close();
                     code.flip();
                     byte[] a = new byte[STATUS_CODE_LENGTH];
                     code.get(a);
@@ -49,7 +51,7 @@ public class FileClient {
                     String oldname = keyboard.nextLine();
                     System.out.println("Please enter in new file name to replace old name");
                     String newName = keyboard.nextLine();
-                    ByteBuffer rename = ByteBuffer.wrap((command+oldname+newName).getBytes());
+                    ByteBuffer rename = ByteBuffer.wrap((command+oldname+newName).getBytes(StandardCharsets.UTF_8));
                     SocketChannel socket = SocketChannel.open();
                     socket.connect(new InetSocketAddress(args[0], serverPort));
                     socket.write(rename);
@@ -64,7 +66,7 @@ public class FileClient {
                     break;
 
                 case "L":
-                    ByteBuffer list = ByteBuffer.wrap(command.getBytes());
+                    ByteBuffer list = ByteBuffer.wrap(command.getBytes(StandardCharsets.UTF_8));
                     SocketChannel chan = SocketChannel.open();
                     chan.connect(new InetSocketAddress(args[0], serverPort));
                     chan.write(list);

@@ -18,7 +18,8 @@ public class FileServer {
             do {
                 numBytes = serverSocket.read(request);
             } while (numBytes >= 0);
-            char command = request.getChar();
+            char command = (char)request.get();
+            System.out.println("received command: " + command);
             switch (command){
                 case 'D':
                     byte[] a = new byte[request.remaining()];
@@ -37,6 +38,7 @@ public class FileServer {
                         serverSocket.write(code);
                     }
                     serverSocket.close();
+                    break;
                 case 'R':
                     break;
                 case 'L':
