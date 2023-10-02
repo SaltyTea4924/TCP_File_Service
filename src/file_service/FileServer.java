@@ -49,21 +49,20 @@ public class FileServer {
                     for ( int i = 0; i <= files.length(); i++){
                         int k = 0;
                         while(files.charAt(k) != '*'){
-                            oldName = oldName + files.charAt(i);
+                            oldName = oldName + files.charAt(k);
                             k = k + 1;
+                        }
 
-                        }
-                        i = i + k;
-                        if (files.charAt(i) != '*') {
-                            newName = newName + files.charAt(i);
-                        }
+                        i = i + k + 1;
+
+                        newName = newName + files.charAt(i);
                     }
 
                     File oldFile = new File(oldName);
                     File newFile = new File(newName);
                     boolean success = false;
                     if (oldFile.exists()){
-                        success = newFile.renameTo(newFile);
+                        success = oldFile.renameTo(newFile);
                     }
                     if (success) {
                         ByteBuffer code = ByteBuffer.wrap("S".getBytes());
