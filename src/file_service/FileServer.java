@@ -47,12 +47,32 @@ public class FileServer {
                     String newName = "";
                     String files = new String(a);
                     for ( int i = 0; i <= files.length(); i++){
-                        while(files.charAt(i) != '*'){
+                        int k = 0;
+                        while(files.charAt(k) != '*'){
                             oldName = oldName + files.charAt(i);
-                        }
+                            k = k + 1;
 
-                        newName = newName + files.charAt(i);
+                        }
+                        i = i + k;
+                        if (files.charAt(i) != '*') {
+                            newName = newName + files.charAt(i);
+                        }
                     }
+
+                    File oldFile = new File(oldName);
+                    File newFile = new File(newName);
+                    boolean success = false;
+                    if (oldFile.exists()){
+                        success = newFile.renameTo(newFile);
+                    }
+                    if (success) {
+                        ByteBuffer code = ByteBuffer.wrap("S".getBytes());
+                        serverSocket.write(code);
+                    } else {
+                        ByteBuffer code = ByteBuffer.wrap("F".getBytes());
+                        serverSocket.write(code);
+                    }
+                    serverSocket.close();
                     break;
                 }
                 case 'L':
