@@ -18,14 +18,17 @@ public class FileServer {
             do {
                 numBytes = serverSocket.read(request);
             } while (numBytes >= 0);
+            request.flip();
             char command = (char)request.get();
+            //request.flip();
             System.out.println("received command: " + command);
             switch (command){
                 case 'D': {
                     byte[] a = new byte[request.remaining()];
                     request.get(a);
                     String fileName = new String(a);
-                    File file = new File(fileName);
+                    System.out.println("file to delete: "+fileName);
+                    File file = new File("ServerFiles/"+fileName);
                     boolean success = false;
                     if (file.exists()) {
                         success = file.delete();
@@ -46,20 +49,14 @@ public class FileServer {
                     String oldName = "";
                     String newName = "";
                     String files = new String(a);
-                    for ( int i = 0; i <= files.length(); i++){
-                        int k = 0;
-                        while(files.charAt(k) != '*'){
-                            oldName = oldName + files.charAt(k);
-                            k = k + 1;
-                        }
 
-                        i = i + k + 1;
-
-                        newName = newName + files.charAt(i);
-                    }
-
-                    File oldFile = new File(oldName);
-                    File newFile = new File(newName);
+                    String[] fileNames = files.split("---");
+                    oldName = fileNames[0];
+                    newName = fileNames[1];
+                    System.out.println(oldName);
+                    System.out.println(newName);
+                    File oldFile = new File("ServerFiles/"+oldName);
+                    File newFile = new File("ServerFiles/"+newName);
                     boolean success = false;
                     if (oldFile.exists()){
                         success = oldFile.renameTo(newFile);

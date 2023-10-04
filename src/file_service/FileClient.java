@@ -20,10 +20,11 @@ public class FileClient {
             Scanner keyboard = new Scanner(System.in);
             command = keyboard.nextLine().toUpperCase();
             switch (command){
-                case "D":
-                    System.out.println("PLease enter file name");
+                case "D": {
+                    System.out.println("Please enter file name");
                     String filename = keyboard.nextLine();
-                    ByteBuffer request = ByteBuffer.wrap((command+filename).getBytes(StandardCharsets.UTF_8));
+                    ByteBuffer request = ByteBuffer.wrap((command + filename).getBytes(StandardCharsets.UTF_8));
+                    //ByteBuffer request = ByteBuffer.wrap((command + filename).getBytes());
                     SocketChannel channel = SocketChannel.open();
                     channel.connect(new InetSocketAddress(args[0], serverPort));
                     channel.write(request);
@@ -37,6 +38,7 @@ public class FileClient {
                     code.get(a);
                     System.out.println(new String(a));
                     break;
+                }
 
                 case "U":
 
@@ -46,12 +48,12 @@ public class FileClient {
 
                     break;
 
-                case "R":
-                    System.out.println("PLease enter file name");
+                case "R": {
+                    System.out.println("Please enter file name");
                     String oldName = keyboard.nextLine();
                     System.out.println("Please enter in new file name to replace old name");
                     String newName = keyboard.nextLine();
-                    ByteBuffer rename = ByteBuffer.wrap((command + oldName + "*" + newName).getBytes(StandardCharsets.UTF_8));
+                    ByteBuffer rename = ByteBuffer.wrap((command + oldName + "---" + newName).getBytes(StandardCharsets.UTF_8));
                     SocketChannel socket = SocketChannel.open();
                     socket.connect(new InetSocketAddress(args[0], serverPort));
                     socket.write(rename);
@@ -64,6 +66,7 @@ public class FileClient {
                     c.get(b);
                     System.out.println(new String(b));
                     break;
+                }
 
                 case "L":
                     ByteBuffer list = ByteBuffer.wrap(command.getBytes(StandardCharsets.UTF_8));
