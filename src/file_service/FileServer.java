@@ -28,7 +28,7 @@ public class FileServer {
                     request.get(a);
                     String fileName = new String(a);
                     System.out.println("file to delete: "+fileName);
-                    File file = new File("ServerFiles/"+fileName);
+                    File file = new File("server_folder/"+fileName);
                     boolean success = false;
                     if (file.exists()) {
                         success = file.delete();
@@ -55,8 +55,8 @@ public class FileServer {
                     newName = fileNames[1];
                     System.out.println(oldName);
                     System.out.println(newName);
-                    File oldFile = new File("ServerFiles/"+oldName);
-                    File newFile = new File("ServerFiles/"+newName);
+                    File oldFile = new File("server_folder/"+oldName);
+                    File newFile = new File("server_folder/"+newName);
                     boolean success = false;
                     if (oldFile.exists()){
                         success = oldFile.renameTo(newFile);
@@ -71,8 +71,31 @@ public class FileServer {
                     serverSocket.close();
                     break;
                 }
-                case 'L':
+                case 'L':{
+                    File[] files = new File("server_folder/").listFiles();
+
+                    String allFiles = "";
+
+                    String fileName = "";
+
+                    assert files != null;
+                    for (File file : files){
+                        if(file.isFile()){
+                            fileName = file.getName();
+                            System.out.println(fileName);
+                            allFiles = allFiles + fileName + "---";
+
+                        }
+                    }
+
+                    System.out.println(allFiles);
+
+                    ByteBuffer list = ByteBuffer.wrap(allFiles.getBytes());
+                    serverSocket.write(list);
+
+                    serverSocket.close();
                     break;
+                }
                 case 'G':
                     break;
                 case 'U':

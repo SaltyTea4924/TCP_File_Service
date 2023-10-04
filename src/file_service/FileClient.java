@@ -75,7 +75,7 @@ public class FileClient {
                     chan.write(list);
                     chan.shutdownOutput();
 
-                    ByteBuffer bytes = ByteBuffer.allocate(2500);
+                    ByteBuffer bytes = ByteBuffer.allocate(25000);
                     chan.read(bytes);
                     bytes.flip();
                     byte[] l = new byte[bytes.toString().length()];
