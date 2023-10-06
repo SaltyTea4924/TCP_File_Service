@@ -58,6 +58,7 @@ public class FileServer {
                     String[] fileNames = files.split("---");
                     oldName = fileNames[0];
                     newName = fileNames[1];
+                    newName = newName.replaceAll("\0", "");
                     System.out.println(oldName);
                     System.out.println(newName);
                     File oldFile = new File("server_folder/"+oldName);
@@ -114,23 +115,22 @@ public class FileServer {
                         serverSocket.write(code);
                     }
                     BufferedReader br = new BufferedReader(new FileReader(file));
-                    String fileLine = "";
-                    FileOutputStream fs = new FileOutputStream(file);
 
                     //System.out.println(fileLine);
 
-                    ByteBuffer c = ByteBuffer.allocate(fileLine.length());
+                    ByteBuffer c = ByteBuffer.allocate(2000);
                     c.putInt(fileName.length());
                     c.put(fileName.getBytes());
-                    FileInputStream f = new FileInputStream(file);
-                    FileChannel fc = fs.getChannel();
-
-                    SocketChannel channel = SocketChannel.open();
+                    serverSocket.write(c);
+                    c.clear();
+                    String fileLine;
 
                     while((fileLine = br.readLine()) != null){
                         c.put(fileLine.getBytes());
+                        c.put((byte) '\n');
                         c.flip();
-                        fc.write(c);
+                        serverSocket.write(c);
+                        //System.out.println(c);
                         c.clear();
 
                     }
