@@ -85,7 +85,7 @@ public class FileClient {
                     code.flip();
                     byte[] a = new byte[STATUS_CODE_LENGTH];
                     code.get(a);
-                    File file = new File("client_folder" + new String(a));
+                    File file = new File("client_folder/" + new String(a));
                     if (!file.exists()){
                         file.createNewFile();
                     }
@@ -121,10 +121,10 @@ public class FileClient {
                     chan.shutdownOutput();
 
                     ByteBuffer bytes = ByteBuffer.allocate(2500);
-                    chan.read(bytes);
+                    int num = chan.read(bytes);
                     chan.close();
                     bytes.flip();
-                    byte[] l = new byte[bytes.toString().length()];
+                    byte[] l = new byte[num];
                     bytes.get(l);
                     System.out.println(new String(l));
                     chan.close();

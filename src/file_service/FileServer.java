@@ -1,8 +1,10 @@
 package file_service;
 
+import javax.lang.model.type.NullType;
+import java.io.*;
+import java.net.InetSocketAddress;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ServerSocketChannel;
@@ -29,8 +31,9 @@ public class FileServer {
                     byte[] a = new byte[request.remaining()];
                     request.get(a);
                     String fileName = new String(a);
-                    System.out.println("file to delete: "+fileName);
-                    File file = new File("server_folder/"+fileName);
+                    fileName = fileName.replaceAll("\0", "");
+                    System.out.println("file to delete: " + fileName + "00");
+                    File file = new File("server_folder/" + fileName);
                     boolean success = false;
                     if (file.exists()) {
                         success = file.delete();
@@ -84,8 +87,7 @@ public class FileServer {
                     for (File file : files){
                         if(file.isFile()){
                             fileName = file.getName();
-                            System.out.println(fileName);
-                            allFiles = allFiles + fileName + "---";
+                            allFiles = allFiles + fileName + "\n";
 
                         }
                     }
@@ -98,15 +100,54 @@ public class FileServer {
                     serverSocket.close();
                     break;
                 }
-                case 'G':
+                case 'G':{
+                    byte[] a = new byte[request.remaining()];
+                    request.get(a);
+                    String fileName = new String(a);
+                    fileName = fileName.replaceAll("\0", "");
+                    File file = new File("server_folder/"+fileName);
+                    System.out.println(fileName);
+                    Boolean success = false;
+                    if(!file.exists()){
+                        System.out.println("File does not exist!");
+                        ByteBuffer code = ByteBuffer.wrap("F".getBytes());
+                        serverSocket.write(code);
+                    }
+                    BufferedReader br = new BufferedReader(new FileReader(file));
+                    String fileLine = "";
+                    FileOutputStream fs = new FileOutputStream(file);
+
+                    //System.out.println(fileLine);
+
+                    ByteBuffer c = ByteBuffer.allocate(fileLine.length());
+                    c.putInt(fileName.length());
+                    c.put(fileName.getBytes());
+                    FileInputStream f = new FileInputStream(file);
+                    FileChannel fc = fs.getChannel();
+
+                    SocketChannel channel = SocketChannel.open();
+
+                    while((fileLine = br.readLine()) != null){
+                        c.put(fileLine.getBytes());
+                        c.flip();
+                        fc.write(c);
+                        c.clear();
+
+                    }
+
+                    ByteBuffer code = ByteBuffer.wrap("S".getBytes());
+                    serverSocket.write(code);
+
+                    serverSocket.close();
                     break;
+                }
                 case 'U':{
                     int nameLength = request.getInt();
                     byte[] a = new byte[nameLength];
                     request.get(a);
                     FileOutputStream fs = new FileOutputStream("server_folder/" + new String(a), true);
                     FileChannel fc = fs.getChannel();
-                    fc.write(request);
+
                     request.clear();
                     while(serverSocket.read(request) >= 0){
                         request.flip();
