@@ -2,6 +2,7 @@ package file_service;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -81,13 +82,17 @@ public class FileClient {
 
                     ByteBuffer code = ByteBuffer.allocate(2500);
                     channel.read(code);
-                    channel.close();
+                    //channel.close();
                     code.flip();
-                    byte[] a = new byte[STATUS_CODE_LENGTH];
+                    int name = code.getInt();
+                    byte[] a = new byte[name];
                     code.get(a);
-                    File file = new File("client_folder/" + new String(a));
-                    if (!file.exists()){
-                        file.createNewFile();
+                    FileOutputStream file = new FileOutputStream("client_folder/" + new String(a), true);
+                    FileChannel fc = file.getChannel();
+                    while (channel.read(code)>=0){
+                        code.flip();
+                        fc.write(code);
+                        code.clear();
                     }
                     System.out.println(new String(a));
                     break;
