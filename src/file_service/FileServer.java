@@ -1,8 +1,10 @@
 package file_service;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 
@@ -17,7 +19,7 @@ public class FileServer {
             int numBytes = 0;
             do {
                 numBytes = serverSocket.read(request);
-            } while (numBytes >= 0);
+            } while ( request.position() > request.get() && numBytes >= 0);
             request.flip();
             char command = (char)request.get();
             //request.flip();
@@ -98,8 +100,28 @@ public class FileServer {
                 }
                 case 'G':
                     break;
-                case 'U':
+                case 'U':{
+                    int nameLength = request.getInt();
+                    byte[] a = new byte[nameLength];
+                    request.get(a);
+                    FileOutputStream fs = new FileOutputStream("server_folder/" + new String(a), true);
+                    FileChannel fc = fs.getChannel();
+                    fc.write(request);
+                    request.clear();
+                    while(serverSocket.read(request) >= 0){
+                        request.flip();
+                        fc.write(request);
+                        request.clear();
+                    }
+                    boolean success = true;
+                    ByteBuffer code = ByteBuffer.wrap("S".getBytes());
+                    serverSocket.write(code);
+
+                    fs.close();
+
+                    serverSocket.close();
                     break;
+                }
 
             }
         }
