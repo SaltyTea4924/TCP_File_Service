@@ -67,7 +67,13 @@ public class FileClient {
                         request.clear();
                     }while (fc.read(request)>=0);
                     channel.shutdownOutput();
+                    ByteBuffer code = ByteBuffer.allocate(1);
+                    channel.read(code);
                     channel.close();
+                    code.flip();
+                    byte[] a = new byte[STATUS_CODE_LENGTH];
+                    code.get(a);
+                    System.out.println(new String(a));
                     //TODO: recieve the status code from server
                     break;
                 }
@@ -82,19 +88,30 @@ public class FileClient {
 
                     ByteBuffer code = ByteBuffer.allocate(2500);
                     channel.read(code);
-                    //channel.close();
                     code.flip();
-                    int name = code.getInt();
-                    byte[] a = new byte[name];
-                    code.get(a);
-                    FileOutputStream file = new FileOutputStream("client_folder/" + new String(a), true);
-                    FileChannel fc = file.getChannel();
-                    while (channel.read(code)>=0){
-                        code.flip();
-                        fc.write(code);
-                        code.clear();
+                    int nameLength = code.getInt();
+                    byte[] filenameBytes = new byte[nameLength];
+                    code.get(filenameBytes);
+                    String receivedFilename = new String(filenameBytes);
+                    File file = new File("client_folder/" + receivedFilename);
+
+                    if (!file.exists()) {
+                        file.createNewFile();
                     }
-                    System.out.println(new String(a));
+
+                    try (FileOutputStream fileOutputStream = new FileOutputStream(file)) {
+                        int bytesRead;
+                        byte[] fileBuffer = new byte[1000];
+                        while ((bytesRead = channel.read(code)) != -1) {
+                            code.flip();
+                            code.get(fileBuffer, 0, bytesRead);
+                            fileOutputStream.write(fileBuffer, 0, bytesRead);
+                            code.clear();
+                        }
+                    }
+
+                    channel.close();
+                    System.out.println("Received file: " + receivedFilename);
                     break;
                 }
                 case "R": {
