@@ -19,6 +19,9 @@ public class FileClient {
         }
         int serverPort = Integer.parseInt(args[1]);
         String command;
+        File folder = new File("client_folder");
+        if (!folder.exists()) {
+            folder.mkdirs();}
         do{
             System.out.println("Please type a command:");
             Scanner keyboard = new Scanner(System.in);
@@ -90,28 +93,24 @@ public class FileClient {
                     channel.read(code);
                     code.flip();
                     int nameLength = code.getInt();
-                    byte[] filenameBytes = new byte[nameLength];
-                    code.get(filenameBytes);
-                    String receivedFilename = new String(filenameBytes);
-                    File file = new File("client_folder/" + receivedFilename);
-
-                    if (!file.exists()) {
-                        file.createNewFile();
+                    File file = new File("client_folder" + filename);
+                    if (file.exists()){
+                        System.out.println("File already exists");
+                        break;
                     }
-
-                    try (FileOutputStream fileOutputStream = new FileOutputStream(file)) {
+                    ByteBuffer buffer = ByteBuffer.allocate(1024);
+                    try (FileOutputStream fileOutputStream = new FileOutputStream("client_folder/" + filename)) {
                         int bytesRead;
-                        byte[] fileBuffer = new byte[1000];
-                        while ((bytesRead = channel.read(code)) != -1) {
-                            code.flip();
-                            code.get(fileBuffer, 0, bytesRead);
-                            fileOutputStream.write(fileBuffer, 0, bytesRead);
-                            code.clear();
+                        while ((bytesRead = channel.read(buffer)) > 1) {
+                            buffer.flip();
+                            fileOutputStream.write(buffer.array(), 0, bytesRead);
+                            buffer.clear();
                         }
                     }
-
                     channel.close();
-                    System.out.println("Received file: " + receivedFilename);
+                    byte[] a = new byte[STATUS_CODE_LENGTH];
+                    code.get(a);
+                    System.out.println(new String(a));
                     break;
                 }
                 case "R": {
