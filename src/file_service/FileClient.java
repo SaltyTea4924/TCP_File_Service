@@ -77,7 +77,7 @@ public class FileClient {
                     byte[] a = new byte[STATUS_CODE_LENGTH];
                     code.get(a);
                     System.out.println(new String(a));
-                    //TODO: recieve the status code from server
+                    //TODO: receive the status code from server
                     break;
                 }
                 case "G": {
@@ -88,6 +88,11 @@ public class FileClient {
                     channel.connect(new InetSocketAddress(args[0], serverPort));
                     channel.write(request);
                     channel.shutdownOutput();
+
+
+                    ByteBuffer code = ByteBuffer.allocate(2500);
+                    channel.read(code);
+                    code.flip();
 
                     File file = new File("client_folder/" + filename);
                     if (file.exists()){

@@ -1,6 +1,5 @@
 package file_service;
 
-import javax.lang.model.type.NullType;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.io.File;
@@ -15,10 +14,16 @@ public class FileServer {
         int port = 3000;
         ServerSocketChannel welcomeChannel = ServerSocketChannel.open();
         welcomeChannel.socket().bind( new InetSocketAddress(port));
-        while (true){
+
+        ExecutorService es = Executors.newFixedThreadPool(4);
+
+        char command;
+
+        do{
+
             SocketChannel serverSocket = welcomeChannel.accept();
             ByteBuffer request = ByteBuffer.allocate(2500);
-            int numBytes = 0;
+            int numBytes;
             do {
                 numBytes = serverSocket.read(request);
             } while ( request.position() > request.get() && numBytes >= 0);
@@ -51,8 +56,8 @@ public class FileServer {
                 case 'R':{
                     byte[] a = new byte[request.remaining()];
                     request.get(a);
-                    String oldName = "";
-                    String newName = "";
+                    String oldName;
+                    String newName;
                     String files = new String(a);
 
                     String[] fileNames = files.split("---");
@@ -82,7 +87,7 @@ public class FileServer {
 
                     String allFiles = "";
 
-                    String fileName = "";
+                    String fileName;
 
                     assert files != null;
                     for (File file : files){
@@ -108,7 +113,6 @@ public class FileServer {
                     fileName = fileName.replaceAll("\0", "");
                     File file = new File("server_folder/"+fileName);
                     System.out.println(fileName);
-                    Boolean success = false;
                     if(!file.exists()){
                         System.out.println("File does not exist!");
                         ByteBuffer code = ByteBuffer.wrap("F".getBytes());
@@ -154,7 +158,6 @@ public class FileServer {
                         fc.write(request);
                         request.clear();
                     }
-                    boolean success = true;
                     ByteBuffer code = ByteBuffer.wrap("S".getBytes());
                     serverSocket.write(code);
 
@@ -162,9 +165,12 @@ public class FileServer {
 
                     serverSocket.close();
                     break;
+                } case 'Q': {
+                    System.out.println("good bye");
+                    es.shutdown();
                 }
 
             }
-        }
+        } while (command != 'Q');
     }
 }
