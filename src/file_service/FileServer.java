@@ -9,13 +9,20 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class FileServer {
     public static void main(String[] args) throws Exception{
         int port = 3000;
         ServerSocketChannel welcomeChannel = ServerSocketChannel.open();
         welcomeChannel.socket().bind( new InetSocketAddress(port));
-        while (true){
+
+        ExecutorService es = Executors.newFixedThreadPool(4);
+
+        char command = 'S';
+
+        do{
             SocketChannel serverSocket = welcomeChannel.accept();
             ByteBuffer request = ByteBuffer.allocate(2500);
             int numBytes = 0;
@@ -23,7 +30,7 @@ public class FileServer {
                 numBytes = serverSocket.read(request);
             } while ( request.position() > request.get() && numBytes >= 0);
             request.flip();
-            char command = (char)request.get();
+            command = (char)request.get();
             //request.flip();
             System.out.println("received command: " + command);
             switch (command){
@@ -162,9 +169,12 @@ public class FileServer {
 
                     serverSocket.close();
                     break;
+                } case 'Q': {
+                    System.out.println("good bye");
+                    es.shutdown();
                 }
 
             }
-        }
+        } while (command != 'Q');
     }
 }
