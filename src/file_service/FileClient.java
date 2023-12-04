@@ -89,11 +89,7 @@ public class FileClient {
                     channel.write(request);
                     channel.shutdownOutput();
 
-                    ByteBuffer code = ByteBuffer.allocate(2500);
-                    channel.read(code);
-                    code.flip();
-                    int nameLength = code.getInt();
-                    File file = new File("client_folder" + filename);
+                    File file = new File("client_folder/" + filename);
                     if (file.exists()){
                         System.out.println("File already exists");
                         break;
@@ -101,15 +97,16 @@ public class FileClient {
                     ByteBuffer buffer = ByteBuffer.allocate(1024);
                     try (FileOutputStream fileOutputStream = new FileOutputStream("client_folder/" + filename)) {
                         int bytesRead;
-                        while ((bytesRead = channel.read(buffer)) > 1) {
+                        while ((bytesRead = channel.read(buffer)) > 0) {
                             buffer.flip();
                             fileOutputStream.write(buffer.array(), 0, bytesRead);
                             buffer.clear();
                         }
                     }
+
                     channel.close();
                     byte[] a = new byte[STATUS_CODE_LENGTH];
-                    code.get(a);
+                    buffer.get(a);
                     System.out.println(new String(a));
                     break;
                 }
