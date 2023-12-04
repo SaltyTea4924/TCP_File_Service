@@ -151,6 +151,14 @@ public class FileClient {
                     chan.close();
                     break;
 
+                case "Q":
+                    ByteBuffer quit = ByteBuffer.wrap(command.getBytes(StandardCharsets.UTF_8));
+                    SocketChannel quitChannel = SocketChannel.open();
+                    quitChannel.connect(new InetSocketAddress(args[0], serverPort));
+                    quitChannel.write(quit);
+                    quitChannel.shutdownOutput();
+                    System.out.println("Thank you for using our file service.");
+
                 default:
                     if(!command.equals("Q")){
                         System.out.println("Invalid command!");
