@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class FileClient {
     private final static int STATUS_CODE_LENGTH = 1;
@@ -30,6 +31,7 @@ public class FileClient {
             System.out.println("Please type a command:");
             Scanner keyboard = new Scanner(System.in);
             command = keyboard.nextLine().toUpperCase();
+            Future<String> result;
             switch (command){
                 case "D": {
                     System.out.println("Please enter file name");
@@ -52,21 +54,13 @@ public class FileClient {
                 }
 
                 case "U": {
-                    System.out.println("Please enter file name");
-                    String fileName = keyboard.nextLine();
-                    File file = new File("client_folder/"+fileName);
-                    if (!file.exists()){
-                        System.out.println("File doesn't exist!");
-                        break;
-                    }
-                    es.submit(new UploadWorker(args, serverPort,fileName,command, file));
-
+                    result = (Future<String>) es.submit(new UploadWorker(args, serverPort,command));
+                    result.get();
                     break;
                 }
                 case "G": {
-                    System.out.println("Please enter file name");
-                    String filename = keyboard.nextLine();
-                    es.submit(new downloadWorker(args, serverPort,filename,command));
+                    result = (Future<String>) es.submit(new downloadWorker(args, serverPort,command));
+                    result.get();
                     break;
                 }
                 case "R": {
@@ -124,21 +118,25 @@ public class FileClient {
         }while(!command.equals("Q"));
     }
     static class UploadWorker implements Runnable {
-        String fileName;
+        Scanner keyboard = new Scanner(System.in);
+
         String command;
         int serverPort;
         String[] args;
-        File file;
-        public UploadWorker(String[] args, int serverport, String fileName, String command, File file){
-            this.fileName = fileName;
+        public UploadWorker(String[] args, int serverport, String command){
             this.serverPort = serverport;
             this.args = args;
             this.command = command;
-            this.file = file;
         }
         public void run(){
             try{
-
+                System.out.println("Please enter file name");
+                String fileName = keyboard.nextLine();
+                File file = new File("client_folder/"+fileName);
+                if (!file.exists()){
+                    System.out.println("File doesn't exist!");
+                    return;
+                }
                 ByteBuffer request = ByteBuffer.allocate(2000);
                 request.put(command.getBytes());
                 request.putInt(fileName.length());
@@ -168,49 +166,50 @@ public class FileClient {
         }
     }
     static class downloadWorker implements Runnable{
-        String fileName;
+        Scanner keyboard = new Scanner(System.in);
         String command;
         int serverPort;
         String[] args;
-        public downloadWorker(String[] args, int serverport, String fileName, String command){
-            this.fileName = fileName;
+        public downloadWorker(String[] args, int serverport, String command){
             this.serverPort = serverport;
             this.args = args;
             this.command = command;
         }
         public void run(){
             try{
-            ByteBuffer request = ByteBuffer.wrap((command + fileName).getBytes(StandardCharsets.UTF_8));
-            SocketChannel channel = SocketChannel.open();
-            channel.connect(new InetSocketAddress(args[0], serverPort));
-            channel.write(request);
-            channel.shutdownOutput();
+                System.out.println("Please enter file name");
+                String filename = keyboard.nextLine();
+                ByteBuffer request = ByteBuffer.wrap((command + filename).getBytes(StandardCharsets.UTF_8));
+                SocketChannel channel = SocketChannel.open();
+                channel.connect(new InetSocketAddress(args[0], serverPort));
+                channel.write(request);
+                channel.shutdownOutput();
 
 
-            ByteBuffer code = ByteBuffer.allocate(2500);
-            channel.read(code);
-            code.flip();
+                 ByteBuffer code = ByteBuffer.allocate(2500);
+                  channel.read(code);
+                  code.flip();
 
-            File file = new File("client_folder/" + fileName);
-            if (file.exists()){
-                System.out.println("File already exists");
-                return;
+                 File file = new File("client_folder/" + filename);
+                   if (file.exists()){
+                     System.out.println("File already exists");
+                     return;
             }
-            ByteBuffer buffer = ByteBuffer.allocate(1024);
-            try (FileOutputStream fileOutputStream = new FileOutputStream("client_folder/" + fileName)) {
-                int bytesRead;
-                while ((bytesRead = channel.read(buffer)) > 0) {
-                    buffer.flip();
-                    fileOutputStream.write(buffer.array(), 0, bytesRead);
-                    buffer.clear();
-                }
-            }
+                 ByteBuffer buffer = ByteBuffer.allocate(1024);
+                   try (FileOutputStream fileOutputStream = new FileOutputStream("client_folder/" + filename)) {
+                     int bytesRead;
+                       while ((bytesRead = channel.read(buffer)) > 0) {
+                          buffer.flip();
+                         fileOutputStream.write(buffer.array(), 0, bytesRead);
+                          buffer.clear();
+                       }
+                 }
 
-            channel.close();
-            byte[] a = new byte[STATUS_CODE_LENGTH];
-            buffer.get(a);
-            System.out.println(new String(a));
-        } catch (IOException e) {
+                  channel.close();
+                  byte[] a = new byte[STATUS_CODE_LENGTH];
+                  buffer.get(a);
+                  System.out.println(new String(a));
+              } catch (IOException e) {
                 e.printStackTrace();
             }
         }
