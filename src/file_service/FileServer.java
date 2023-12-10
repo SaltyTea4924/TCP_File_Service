@@ -8,6 +8,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class FileServer {
     public static void main(String[] args) throws Exception{
@@ -28,7 +30,7 @@ public class FileServer {
                 numBytes = serverSocket.read(request);
             } while ( request.position() > request.get() && numBytes >= 0);
             request.flip();
-            char command = (char)request.get();
+            command = (char)request.get();
             //request.flip();
             System.out.println("received command: " + command);
             switch (command){
