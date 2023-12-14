@@ -187,8 +187,8 @@ public class FileClient {
 
 
                  ByteBuffer code = ByteBuffer.allocate(2500);
-                  channel.read(code);
-                  code.flip();
+                 channel.read(code);
+                 code.flip();
 
                  File file = new File("client_folder/" + filename);
                    if (file.exists()){
@@ -199,9 +199,9 @@ public class FileClient {
                    try (FileOutputStream fileOutputStream = new FileOutputStream("client_folder/" + filename)) {
                      int bytesRead;
                        while ((bytesRead = channel.read(buffer)) > 0) {
-                          buffer.flip();
-                         fileOutputStream.write(buffer.array(), 0, bytesRead);
-                          buffer.clear();
+                           buffer.flip();
+                           fileOutputStream.write(buffer.array(), 0, bytesRead);
+                           buffer.clear();
                        }
                  }
 
