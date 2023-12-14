@@ -13,9 +13,16 @@ import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class FileClient {
     private final static int STATUS_CODE_LENGTH = 1;
+    public static ReentrantLock lock = new ReentrantLock();
+    public static boolean isDownloading = false;
+    public static boolean isUploading = false;
+    public static Condition doneDownloading = lock.newCondition();
+    public static Condition doneUploading = lock.newCondition();
     public static void main(String[] args) throws Exception{
         if (args.length != 2){
             System.out.println("Syntax: File Client <ServerIP> <ServerPort>");
@@ -54,13 +61,25 @@ public class FileClient {
                 }
 
                 case "U": {
-                    result = (Future<String>) es.submit(new UploadWorker(args, serverPort,command));
-                    result.get();
+                    //Can not run if the file is already being deleted, renamed, or uploading in the process
+                    System.out.println("Please enter file name");
+                    String fileName = keyboard.nextLine();
+                    File file = new File("client_folder/"+fileName);
+                    if (!file.exists()){
+                        System.out.println("File doesn't exist!");
+                        return;
+                    }
+                    es.submit(new UploadWorker(args, serverPort,command, fileName, file));
+                    System.out.println("uploaded");
                     break;
                 }
                 case "G": {
-                    result = (Future<String>) es.submit(new downloadWorker(args, serverPort,command));
-                    result.get();
+                    //Can not run if the file is already being deleted, renamed, or uploading in the process
+                    // can work with multiple download threads
+                    System.out.println("Please enter file name");
+                    String filename = keyboard.nextLine();
+                    es.submit(new downloadWorker(args, serverPort,command, filename));
+
                     break;
                 }
                 case "R": {
@@ -119,24 +138,26 @@ public class FileClient {
     }
     static class UploadWorker implements Runnable {
         Scanner keyboard = new Scanner(System.in);
-
         String command;
         int serverPort;
         String[] args;
-        public UploadWorker(String[] args, int serverport, String command){
+        String fileName;
+        File file;
+        public UploadWorker(String[] args, int serverport, String command, String fileName, File file){
             this.serverPort = serverport;
             this.args = args;
             this.command = command;
+            this.fileName = fileName;
+            this.file = file;
+
+
         }
         public void run(){
             try{
-                System.out.println("Please enter file name");
-                String fileName = keyboard.nextLine();
-                File file = new File("client_folder/"+fileName);
-                if (!file.exists()){
-                    System.out.println("File doesn't exist!");
-                    return;
+                while (isUploading == true) {
+                    doneUploading.await();
                 }
+                isUploading = true;
                 ByteBuffer request = ByteBuffer.allocate(2000);
                 request.put(command.getBytes());
                 request.putInt(fileName.length());
@@ -159,26 +180,33 @@ public class FileClient {
                 byte[] a = new byte[STATUS_CODE_LENGTH];
                 code.get(a);
                 System.out.println(new String(a));
+                isUploading = false;
+                doneUploading.signal();
                 //TODO: receive the status code from server
-            } catch (IOException e) {
+            } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
             }
         }
     }
     static class downloadWorker implements Runnable{
-        Scanner keyboard = new Scanner(System.in);
+        Scanner keyboard;
         String command;
         int serverPort;
+        String filename;
         String[] args;
-        public downloadWorker(String[] args, int serverport, String command){
+        public downloadWorker(String[] args, int serverport, String command, String filename){
             this.serverPort = serverport;
             this.args = args;
             this.command = command;
+            this.filename = filename;
         }
         public void run(){
+            lock.lock();
             try{
-                System.out.println("Please enter file name");
-                String filename = keyboard.nextLine();
+                while (isDownloading == true || isUploading == true){
+                    doneDownloading.await();
+                }
+                isDownloading = true;
                 ByteBuffer request = ByteBuffer.wrap((command + filename).getBytes(StandardCharsets.UTF_8));
                 SocketChannel channel = SocketChannel.open();
                 channel.connect(new InetSocketAddress(args[0], serverPort));
@@ -209,8 +237,12 @@ public class FileClient {
                   byte[] a = new byte[STATUS_CODE_LENGTH];
                   buffer.get(a);
                   System.out.println(new String(a));
-              } catch (IOException e) {
+                  isDownloading = false;
+                  doneDownloading.signal();
+              } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
+            } finally {
+                lock.unlock();
             }
         }
     }
